@@ -1,80 +1,82 @@
+// Reemplaza los paquetes y módulos de MySQL por Mongoose
 const express = require('express');
-const mysql = require('mysql2');
+const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3000;
-
 app.use(express.json());
 app.use(cors());
 
-// Configura la conexión a la base de datos
-const conn = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '@1234567',
-    database: 'gamestore',
-    authPlugins: {
-        mysql_clear_password: () => () => Buffer.from('@1234567')
-    }
+// Conectarse a MongoDB Atlas
+const mongoUri = 'mongodb+srv://jjcadena2:Jejocad12@gamestore.mzmncxu.mongodb.net/';
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('Conexión a MongoDB Atlas establecida correctamente.');
+  })
+  .catch((err) => {
+    console.error('Error al conectar a MongoDB Atlas:', err);
+  });
+
+// Definir el esquema y el modelo de Videojuego
+const videojuegoSchema = new mongoose.Schema({
+  IDVI: String,
+  NOMBREVI: String,
+  PRECIOVI: Number,
+  IMAGENVI: String,
+  DESCRIPCIONVI: String,
+  STOCKVI: Number
 });
 
-// Conecta a la base de datos
-conn.connect((err) => {
-    if (err) {
-        console.error('Error de conexión a la base de datos: ', err);
-        return;
-    }
-    console.log('Conexión exitosa a la base de datos');
-});
+const Videojuego = mongoose.model('Videojuego', videojuegoSchema);
 
 // Obtener todos los videojuegos
-app.get('/videojuegos', (req, res) => {
-    const query = 'SELECT * FROM VIDEOJUEGO';
-    conn.query(query, (err, result) => {
-    if (err) throw err;
-        res.json(result);
-    });
+app.get('/videojuegos', async (req, res) => {
+  try {
+    const videojuegos = await Videojuego.find();
+    res.json(videojuegos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los videojuegos.' });
+  }
 });
 
 // Obtener un videojuego por su ID
-app.get('/videojuegos/:videojuego_id', (req, res) => {
-    const videojuegoId = req.params.videojuego_id;
-    const query = `SELECT * FROM VIDEOJUEGO WHERE IDVI = '${videojuegoId}'`;
-    conn.query(query, (err, result) => {
-    if (err) throw err;
-    if (result.length === 0) {
-        res.status(404).json({ error: 'No se encontró el videojuego' });
-    } else {
-        res.json(result[0]);
-        }
-    });
+app.get('/videojuegos/:videojuego_id', async (req, res) => {
+  const { videojuego_id } = req.params;
+  try {
+    const videojuego = await Videojuego.findById(videojuego_id);
+    if (!videojuego) {
+      return res.status(404).json({ message: 'No se encontró el videojuego.' });
+    }
+    res.json(videojuego);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el videojuego.' });
+  }
 });
 
 // Obtener videojuegos por nombre de plataforma
-app.get('/videojuegos/plataforma/:plataforma_nombre', (req, res) => {
-    const plataformaNombre = req.params.plataforma_nombre;
-    const query = `SELECT V.* FROM VIDEOJUEGO V JOIN PERTENECE P ON V.IDVI = P.IDVI JOIN PLATAFORMA PLA ON P.IDPLA = PLA.IDPLA WHERE PLA.NOMBREPLA = '${plataformaNombre}'`;
-    conn.query(query, (err, result) => {
-    if (err) throw err;
-    if (result.length === 0) {
-        res.status(404).json({ error: 'No se encontraron videojuegos para la plataforma especificada' });
-    } else {
-        res.json(result);
-        }
-    });
+app.get('/videojuegos/plataforma/:plataforma_nombre', async (req, res) => {
+  const { plataforma_nombre } = req.params;
+  try {
+    const videojuegos = await Videojuego.find({ NOMBREPLA: plataforma_nombre });
+    if (videojuegos.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron videojuegos para la plataforma especificada' });
+    }
+    res.json(videojuegos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los videojuegos para la plataforma especificada.' });
+  }
 });
 
 // Crear un nuevo videojuego
-app.post('/videojuegos', (req, res) => {
-    const videojuego = req.body;
-    const query = 'INSERT INTO VIDEOJUEGO (IDVI, NOMBREVI, PRECIOVI, IMAGENVI, DESCRIPCIONVI, STOCKVI) VALUES (?, ?, ?, ?, ?, ?)';
-    const values = [videojuego.IDVI, videojuego.NOMBREVI, videojuego.PRECIOVI, videojuego.IMAGENVI, videojuego.DESCRIPCIONVI, videojuego.STOCKVI];
-    conn.query(query, values, (err) => {
-    if (err) throw err;
-        res.json({ message: 'Videojuego creado correctamente' });
-    });
-});
+//app.post('/videojuegos', (req, res) => {
+//    const videojuego = req.body;
+//    const query = 'INSERT INTO VIDEOJUEGO (IDVI, NOMBREVI, PRECIOVI, IMAGENVI, DESCRIPCIONVI, STOCKVI) VALUES (?, ?, ?, ?, ?, ?)';
+//    const values = [videojuego.IDVI, videojuego.NOMBREVI, videojuego.PRECIOVI, videojuego.IMAGENVI, videojuego.DESCRIPCIONVI, videojuego.STOCKVI];
+//    conn.query(query, values, (err) => {
+//    if (err) throw err;
+//        res.json({ message: 'Videojuego creado correctamente' });
+//    });
+//});
 
 // Actualizar un videojuego existente
 // app.put('/videojuegos/:videojuego_id', (req, res) => {
@@ -98,6 +100,8 @@ app.post('/videojuegos', (req, res) => {
 //    });
 //});
 
+// Puerto para escuchar las peticiones
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.log(`Servidor Express.js escuchando en el puerto ${port}`);
+  console.log(`Servidor escuchando en el puerto ${port}`);
 });
