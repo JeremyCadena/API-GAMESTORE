@@ -8,23 +8,23 @@ app.use(express.json());
 app.use(cors());
 
 // Conectarse a MongoDB Atlas
-const mongoUri = 'mongodb+srv://jjcadena2:Jejocad12@gamestore.mzmncxu.mongodb.net/';
+const mongoUri = 'mongodb+srv://jjcadena2:Jejocad12@gamestore.mzmncxu.mongodb.net/gamestore';
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log('Conexión a MongoDB Atlas establecida correctamente.');
-  })
-  .catch((err) => {
-    console.error('Error al conectar a MongoDB Atlas:', err);
-  });
+    .then(() => {
+        console.log('Conexión a MongoDB Atlas establecida correctamente.');
+    })
+    .catch((err) => {
+        console.error('Error al conectar a MongoDB Atlas:', err);
+    });
 
 // Definir el esquema y el modelo de Videojuego
 const videojuegoSchema = new mongoose.Schema({
-  IDVI: String,
-  NOMBREVI: String,
-  PRECIOVI: Number,
-  IMAGENVI: String,
-  DESCRIPCIONVI: String,
-  STOCKVI: Number
+    IDVI: String,
+    NOMBREVI: String,
+    PRECIOVI: Number,
+    IMAGENVI: String,
+    DESCRIPCIONVI: String,
+    STOCKVI: Number
 });
 
 const Videojuego = mongoose.model('Videojuego', videojuegoSchema);
@@ -100,8 +100,8 @@ app.get('/videojuegos/plataforma/:plataforma_nombre', async (req, res) => {
 //    });
 //});
 
-// Puerto para escuchar las peticiones
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Servidor escuchando en el puerto ${port}`);
+// Configurar el puerto de escucha
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+  console.log(`Servidor Express.js escuchando en el puerto ${PORT}`);
 });
