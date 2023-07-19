@@ -32,8 +32,8 @@ const Videojuego = mongoose.model('Videojuego', videojuegoSchema);
 // Obtener todos los videojuegos
 app.get('/videojuegos', async (req, res) => {
   try {
-    const videojuegos = await Videojuego.find();
-    res.json(videojuegos);
+    const videojuego = await Videojuego.find();
+    res.json(videojuego);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los videojuegos.' });
   }
